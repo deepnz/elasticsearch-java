@@ -4,45 +4,33 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.TransportUtils;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
-import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
+
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.KeyStore;
+
 
 public class App {
     public static void main(String[] args) throws IOException {
 
-        // URL and API key
-//        String serverUrl = "https://localhost:9200";
-//        String apiKey = "VnVhQ2ZHY0JDZGJrU...";
-
-        String fingerprint = "fingerprint";
+        String fingerprint = "b6ad27e2cadd7748e7eabc83a599476b025c3ed2d846f0af72d0646b9f3e4167";
 
         SSLContext sslContext = TransportUtils
                 .sslContextFromCaFingerprint(fingerprint);
 
         BasicCredentialsProvider credsProv = new BasicCredentialsProvider();
         credsProv.setCredentials(
-                AuthScope.ANY, new UsernamePasswordCredentials("elastic", "password")
+                AuthScope.ANY, new UsernamePasswordCredentials("elastic", "S_aOKCCXwTT40L8K7gQF")
         );
 
 
@@ -53,13 +41,7 @@ public class App {
                         .setDefaultCredentialsProvider(credsProv)
                 )
                 .build();
-        // Create the low-level client
-//        RestClient restClient = RestClient
-//                .builder(HttpHost.create(serverUrl))
-//                .setDefaultHeaders(new Header[]{
-//                        new BasicHeader("Authorization", "ApiKey " + apiKey)
-//                })
-//                .build();
+
 
 // Create the transport with a Jackson mapper
         ElasticsearchTransport transport = new RestClientTransport(
@@ -68,7 +50,7 @@ public class App {
 // And create the API client
         ElasticsearchClient esClient = new ElasticsearchClient(transport);
 
-        Product product  = new Product ("1", "Product 1", "Product 1 description");
+        Product product  = new Product ("1", "Product 1", "Product 1 description- bike");
 
         IndexRequest<Object> indexRequest =
                 new IndexRequest.Builder<>()
@@ -78,14 +60,27 @@ public class App {
                 .build();
 
         esClient.index(indexRequest);
-        IndexResponse response = esClient.index(g -> g
+//        IndexResponse response = esClient.index(g -> g
+//                        .index("products")
+//                        .id(product.getId())
+//                .document(  product));
+
+        String searchText = "bike";
+
+        SearchResponse<Product> response = esClient.search(s -> s
                         .index("products")
-                        .id(product.getId())
-                .document(  product));
+                        .query(q -> q
+                                .match(t -> t
+                                        .field("id")
+                                        .query(searchText)
+                                )
+                        ),
+                Product.class
+        );
 
 //        if (response.found()) {
 //            Product productRes = response.();
-            System.out.println("Products- " + response.index());
+            System.out.println("Products- " + response);
 
     }
 }
